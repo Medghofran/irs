@@ -4,6 +4,8 @@ from processor_pipeline import DocumentProcessor
 from nltk.stem import WordNetLemmatizer, SnowballStemmer
 import math
 
+docMetrics = {}
+
 
 class DocId:
     ID = 0
@@ -22,7 +24,11 @@ docProcessor.addProcessor(
 def extractDocMetrics(text, posting):
     metrics = {}
     freqDist = getFrequency(text)
+    print(text)
     for key in freqDist:
+        print(key)
+        if key not in posting:
+            pass
         # calculate the tf.idf coefficient per ratio
         wtf = 1 + math.log10(freqDist[key])
         widf = math.log10(DocId.ID/posting[key][1])
@@ -32,10 +38,12 @@ def extractDocMetrics(text, posting):
 
 def batchExtractMetrics(corpus):
     termFreq = {}
+    global docMetrics
     for text in corpus:
         txt = docProcessor.process(text)
         freqDist = getFrequency(txt)
         termFreq = mergeDict(termFreq, freqDist)
+    docMetrics = termFreq
     return termFreq
 
 
@@ -93,6 +101,15 @@ def calculateSimilarity(query, posting):
                 total[x[0]] = x[1]
     print(total)
     return sorted(total, reverse=True)
+
+
+def querySearch(query: str):
+    global docMetrics
+    processedQuery = docProcessor.process(query)
+    queryMetrics = extractDocMetrics(processedQuery, docMetrics)
+
+    docs = calculateSimilarity(queryMetrics, docMetrics)
+    return docs
 
 
 if __name__ == "__main__":
